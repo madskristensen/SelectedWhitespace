@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json.schemastore.org/vsix-publish",
+  "categories": [ "coding" ],
+  "identity": {
+    "internalName": "SelectedWhitespace",
+    "tags": [ "whitespace", "spaces", "tabs", "selection", "editor", "visualization" ]
+  },
+  "overview": "README.md",
+  "publisher": "MadsKristensen",
+  "repo": "https://github.com/madskristensen/SelectedWhitespace"
+}
