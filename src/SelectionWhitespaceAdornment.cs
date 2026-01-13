@@ -20,6 +20,7 @@ namespace SelectedWhitespace
         private readonly IAdornmentLayer _layer;
         private readonly IOutliningManager _outliningManager;
         private Brush _whitespaceBrush;
+        private Brush _lineEndingBrush;
         private Typeface _typeface;
 
         public SelectionWhitespaceAdornment(IWpfTextView view, IOutliningManager outliningManager)
@@ -44,6 +45,14 @@ namespace SelectedWhitespace
                 Constants.WhitespaceGrayLevel,
                 Constants.WhitespaceGrayLevel));
             _whitespaceBrush.Freeze();
+
+            // Line endings are slightly transparent
+            _lineEndingBrush = new SolidColorBrush(Color.FromArgb(
+                Constants.LineEndingOpacity,
+                Constants.WhitespaceGrayLevel,
+                Constants.WhitespaceGrayLevel,
+                Constants.WhitespaceGrayLevel));
+            _lineEndingBrush.Freeze();
 
             // Get the editor's typeface
             TextRunProperties textProperties = _view.FormattedLineSource?.DefaultTextProperties;
@@ -119,36 +128,39 @@ namespace SelectedWhitespace
             for (var i = 0; i < text.Length; i++)
             {
                 var c = text[i];
-                char? symbolChar = null;
+                string symbol = null;
                 var charCount = 1;
+                var isLineEnding = false;
 
                 if (c == ' ')
                 {
-                    symbolChar = Constants.SpaceDot;
+                    symbol = Constants.SpaceDot.ToString();
                 }
                 else if (c == '\t')
                 {
-                    symbolChar = Constants.TabArrow;
+                    symbol = Constants.TabArrow.ToString();
                 }
                 else if (c == '\r')
                 {
+                    isLineEnding = true;
                     // Check for CRLF
                     if (i + 1 < text.Length && text[i + 1] == '\n')
                     {
-                        symbolChar = Constants.CrlfSymbol;
+                        symbol = Constants.CrlfSymbol;
                         charCount = 2;
                     }
                     else
                     {
-                        symbolChar = Constants.CrSymbol;
+                        symbol = Constants.CrSymbol;
                     }
                 }
                 else if (c == '\n')
                 {
-                    symbolChar = Constants.LfSymbol;
+                    isLineEnding = true;
+                    symbol = Constants.LfSymbol;
                 }
 
-                if (symbolChar.HasValue)
+                if (symbol != null)
                 {
                     var charPosition = selectionSpan.Start.Position + i;
 
@@ -162,46 +174,57 @@ namespace SelectedWhitespace
 
                     var charSpan = new SnapshotSpan(snapshot, charPosition, 1);
 
-                    DrawWhitespaceGlyph(charSpan, symbolChar.Value);
+                                        DrawWhitespaceGlyph(charSpan, symbol, isLineEnding);
 
-                    if (charCount == 2)
-                    {
-                        i++; // Skip the \n in CRLF
+                                        if (charCount == 2)
+                                        {
+                                            i++; // Skip the \n in CRLF
+                                        }
+                                    }
+                                }
+                            }
+
+                            private void DrawWhitespaceGlyph(SnapshotSpan charSpan, string symbol, bool isLineEnding)
+                            {
+                                Geometry geometry = _view.TextViewLines.GetMarkerGeometry(charSpan);
+                                if (geometry == null)
+                                    return;
+
+                                Rect bounds = geometry.Bounds;
+                                var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
+                                var fontSize = baseFontSize;
+
+                                // Line endings are smaller and use transparent brush
+                                if (isLineEnding)
+                                {
+                                    fontSize += Constants.LineEndingFontSizeOffset;
+                                }
+
+                                var textBlock = new TextBlock
+                                {
+                                    Text = symbol,
+                                    FontFamily = _typeface.FontFamily,
+                                    FontSize = fontSize,
+                                    FontStyle = isLineEnding ? FontStyles.Italic : FontStyles.Normal,
+                                    Foreground = isLineEnding ? _lineEndingBrush : _whitespaceBrush,
+                                    // Center the glyph in the character cell
+                                    TextAlignment = TextAlignment.Center,
+                                    Width = bounds.Width,
+                                    Height = bounds.Height
+                                };
+
+                                // Adjust top position for smaller font to align baseline
+                                var top = isLineEnding ? bounds.Top + (baseFontSize - fontSize) : bounds.Top;
+
+                                Canvas.SetLeft(textBlock, bounds.Left);
+                                Canvas.SetTop(textBlock, top);
+
+                                _layer.AddAdornment(
+                                    AdornmentPositioningBehavior.TextRelative,
+                                    charSpan,
+                                    null,
+                                    textBlock,
+                                    null);
+                            }
+                        }
                     }
-                }
-            }
-        }
-
-        private void DrawWhitespaceGlyph(SnapshotSpan charSpan, char symbol)
-        {
-            Geometry geometry = _view.TextViewLines.GetMarkerGeometry(charSpan);
-            if (geometry == null)
-                return;
-
-            Rect bounds = geometry.Bounds;
-            var fontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
-
-            var textBlock = new TextBlock
-            {
-                Text = symbol.ToString(),
-                FontFamily = _typeface.FontFamily,
-                FontSize = fontSize,
-                Foreground = _whitespaceBrush,
-                // Center the glyph in the character cell
-                TextAlignment = TextAlignment.Center,
-                Width = bounds.Width,
-                Height = bounds.Height
-            };
-
-            Canvas.SetLeft(textBlock, bounds.Left);
-            Canvas.SetTop(textBlock, bounds.Top);
-
-            _layer.AddAdornment(
-                AdornmentPositioningBehavior.TextRelative,
-                charSpan,
-                null,
-                textBlock,
-                null);
-        }
-    }
-}

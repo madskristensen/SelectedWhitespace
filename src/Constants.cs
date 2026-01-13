@@ -5,19 +5,21 @@ namespace SelectedWhitespace
     /// </summary>
     internal static class Constants
     {
-        // Unicode characters matching VS's built-in whitespace visualization
-        public const char SpaceDot = '·';      // Middle dot for space (U+00B7)
-        public const char TabArrow = '→';      // Rightwards arrow for tab (U+2192)
-        public const char CrlfSymbol = '↲';    // Downwards arrow with tip leftwards for CRLF (U+21B2)
-        public const char LfSymbol = '↓';      // Downwards arrow for LF (U+2193)
-        public const char CrSymbol = '←';      // Leftwards arrow for CR (U+2190)
+        // Whitespace symbols
+        public const char SpaceDot = '·';           // Middle dot for space (U+00B7)
+        public const char TabArrow = '→';           // Rightwards arrow for tab (U+2192)
+        public const string CrlfSymbol = "\\r\\n";  // Backslash-escaped representation
+        public const string LfSymbol = "\\n";       // Backslash-escaped representation
+        public const string CrSymbol = "\\r";       // Backslash-escaped representation
 
         // Tooltips for line endings
         public const string CrlfTooltip = "CRLF (Windows)";
         public const string LfTooltip = "LF (Unix/macOS)";
         public const string CrTooltip = "CR (Classic Mac)";
 
-        // Default color for whitespace glyphs (medium gray)
-        public const byte WhitespaceGrayLevel = 128;
-    }
-}
+                // Default color for whitespace glyphs (medium gray)
+                public const byte WhitespaceGrayLevel = 128;
+                public const byte LineEndingOpacity = 140;  // More transparent (0-255)
+                public const double LineEndingFontSizeOffset = -3.0;  // 3pt smaller
+            }
+        }

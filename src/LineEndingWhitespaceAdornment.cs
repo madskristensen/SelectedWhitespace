@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.TextFormatting;
@@ -37,31 +38,32 @@ namespace SelectedWhitespace
             if (_isEnabled)
             {
                 RedrawAdornments();
+                }
             }
-        }
 
-        private void UpdateBrushAndTypeface()
-        {
-            // Use a medium gray that's visible on both light and dark themes
-            _whitespaceBrush = new SolidColorBrush(Color.FromRgb(
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel));
-            _whitespaceBrush.Freeze();
-
-            // Get the editor's typeface
-            TextRunProperties textProperties = _view.FormattedLineSource?.DefaultTextProperties;
-            _typeface = textProperties?.Typeface ?? new Typeface("Consolas");
-        }
-
-        private void OnOptionChanged(object sender, EditorOptionChangedEventArgs e)
-        {
-            if (e.OptionId == DefaultTextViewOptions.UseVisibleWhitespaceName)
+            private void UpdateBrushAndTypeface()
             {
-                _isEnabled = _view.Options.IsVisibleWhitespaceEnabled();
-                RedrawAdornments();
+                // Use a medium gray with slight transparency for line endings
+                _whitespaceBrush = new SolidColorBrush(Color.FromArgb(
+                    Constants.LineEndingOpacity,
+                    Constants.WhitespaceGrayLevel,
+                    Constants.WhitespaceGrayLevel,
+                    Constants.WhitespaceGrayLevel));
+                _whitespaceBrush.Freeze();
+
+                // Get the editor's typeface
+                TextRunProperties textProperties = _view.FormattedLineSource?.DefaultTextProperties;
+                _typeface = textProperties?.Typeface ?? new Typeface("Consolas");
             }
-        }
+
+            private void OnOptionChanged(object sender, EditorOptionChangedEventArgs e)
+            {
+                if (e.OptionId == DefaultTextViewOptions.UseVisibleWhitespaceName)
+                {
+                    _isEnabled = _view.Options.IsVisibleWhitespaceEnabled();
+                    RedrawAdornments();
+                }
+            }
 
         private void OnViewClosed(object sender, EventArgs e)
         {
@@ -113,7 +115,7 @@ namespace SelectedWhitespace
                 return;
 
             var nextChar = snapshot[lineEnd.Position];
-            char? symbolChar = null;
+            string symbol = null;
             string tooltip = null;
 
             if (nextChar == '\r')
@@ -121,52 +123,57 @@ namespace SelectedWhitespace
                 // Check for CRLF
                 if (lineEnd.Position + 1 < snapshot.Length && snapshot[lineEnd.Position + 1] == '\n')
                 {
-                    symbolChar = Constants.CrlfSymbol;
+                    symbol = Constants.CrlfSymbol;
                     tooltip = Constants.CrlfTooltip;
                 }
                 else
                 {
-                    symbolChar = Constants.CrSymbol;
+                    symbol = Constants.CrSymbol;
                     tooltip = Constants.CrTooltip;
                 }
             }
             else if (nextChar == '\n')
             {
-                symbolChar = Constants.LfSymbol;
+                symbol = Constants.LfSymbol;
                 tooltip = Constants.LfTooltip;
             }
 
-            if (symbolChar.HasValue)
-            {
-                DrawLineEndingGlyph(line, symbolChar.Value, tooltip);
+                if (symbol != null)
+                {
+                    DrawLineEndingGlyph(line, symbol, tooltip);
+                }
+                    }
+
+                    private void DrawLineEndingGlyph(ITextViewLine line, string symbol, string tooltip)
+                    {
+                        // Position at the end of the line text
+                        var left = line.TextRight;
+                        var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
+                        var fontSize = baseFontSize + Constants.LineEndingFontSizeOffset;
+
+                        // Adjust top position to align baseline with the text
+                        // The smaller font needs to be pushed down to align
+                        var top = line.TextTop + (baseFontSize - fontSize);
+
+                        var textBlock = new TextBlock
+                        {
+                            Text = symbol,
+                            FontFamily = _typeface.FontFamily,
+                            FontSize = fontSize,
+                            FontStyle = FontStyles.Italic,
+                            Foreground = _whitespaceBrush,
+                            ToolTip = tooltip
+                        };
+
+                        Canvas.SetLeft(textBlock, left);
+                        Canvas.SetTop(textBlock, top);
+
+                        _layer.AddAdornment(
+                            AdornmentPositioningBehavior.TextRelative,
+                            line.Extent,
+                            null,
+                            textBlock,
+                            null);
+                    }
+                }
             }
-        }
-
-        private void DrawLineEndingGlyph(ITextViewLine line, char symbol, string tooltip)
-        {
-            // Position at the end of the line text
-            var bounds = line.TextRight;
-            var top = line.TextTop;
-            var fontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
-
-            var textBlock = new TextBlock
-            {
-                Text = symbol.ToString(),
-                FontFamily = _typeface.FontFamily,
-                FontSize = fontSize,
-                Foreground = _whitespaceBrush,
-                ToolTip = tooltip
-            };
-
-            Canvas.SetLeft(textBlock, bounds);
-            Canvas.SetTop(textBlock, top);
-
-            _layer.AddAdornment(
-                AdornmentPositioningBehavior.TextRelative,
-                line.Extent,
-                null,
-                textBlock,
-                null);
-        }
-    }
-}
