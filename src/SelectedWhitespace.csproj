@@ -67,7 +67,10 @@
     <Compile Include="WhitespaceGlyphFactory.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\LICENSE.txt" />
+    <Content Include="Resources\LICENSE.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
