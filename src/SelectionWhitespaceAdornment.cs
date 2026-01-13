@@ -5,12 +5,14 @@ using System.Windows.Media;
 using System.Windows.Media.TextFormatting;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Text.Editor.OptionsExtensionMethods;
 using Microsoft.VisualStudio.Text.Outlining;
 
 namespace SelectedWhitespace
 {
     /// <summary>
     /// Renders whitespace characters (spaces, tabs, line endings) only within selected text.
+    /// Automatically disables when VS's built-in "View White Space" is enabled.
     /// </summary>
     internal sealed class SelectionWhitespaceAdornment
     {
@@ -30,6 +32,7 @@ namespace SelectedWhitespace
 
             _view.Selection.SelectionChanged += OnSelectionChanged;
             _view.LayoutChanged += OnLayoutChanged;
+            _view.Options.OptionChanged += OnOptionChanged;
             _view.Closed += OnViewClosed;
         }
 
@@ -47,10 +50,20 @@ namespace SelectedWhitespace
             _typeface = textProperties?.Typeface ?? new Typeface("Consolas");
         }
 
+        private void OnOptionChanged(object sender, EditorOptionChangedEventArgs e)
+        {
+            // When View White Space is toggled, redraw (or clear) adornments
+            if (e.OptionId == DefaultTextViewOptions.UseVisibleWhitespaceName)
+            {
+                RedrawAdornments();
+            }
+        }
+
         private void OnViewClosed(object sender, EventArgs e)
         {
             _view.Selection.SelectionChanged -= OnSelectionChanged;
             _view.LayoutChanged -= OnLayoutChanged;
+            _view.Options.OptionChanged -= OnOptionChanged;
             _view.Closed -= OnViewClosed;
         }
 
@@ -70,6 +83,11 @@ namespace SelectedWhitespace
         private void RedrawAdornments()
         {
             _layer.RemoveAllAdornments();
+
+            // Don't show selection whitespace when VS's built-in "View White Space" is enabled
+            // (VS shows spaces/tabs, and LineEndingWhitespaceAdornment shows line endings)
+            if (_view.Options.IsVisibleWhitespaceEnabled())
+                return;
 
             if (_view.Selection.IsEmpty)
                 return;
