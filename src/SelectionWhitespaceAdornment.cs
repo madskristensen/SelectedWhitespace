@@ -6,6 +6,7 @@ using System.Windows.Media.TextFormatting;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Editor.OptionsExtensionMethods;
+using Microsoft.VisualStudio.Text.Formatting;
 using Microsoft.VisualStudio.Text.Outlining;
 
 namespace SelectedWhitespace
@@ -144,6 +145,25 @@ namespace SelectedWhitespace
 
                     // Skip if this position is inside a collapsed region
                     if (collapsedRegions != null && collapsedRegions.Any(r => r.Contains(charPosition)))
+                    {
+                        if (charCount == 2)
+                            i++;
+                        continue;
+                    }
+
+                    // Skip if position is not on a visible line (e.g., elided content from other extensions)
+                    ITextViewLine textViewLine = _view.TextViewLines.GetTextViewLineContainingBufferPosition(
+                        new SnapshotPoint(snapshot, charPosition));
+                    if (textViewLine == null)
+                    {
+                        if (charCount == 2)
+                            i++;
+                        continue;
+                    }
+
+                    // For line endings, only draw if the position matches the visible line's end
+                    // (matches behavior of LineEndingWhitespaceAdornment which iterates visible lines)
+                    if (isLineEnding && charPosition != textViewLine.End.Position)
                     {
                         if (charCount == 2)
                             i++;
