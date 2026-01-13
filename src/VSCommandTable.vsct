@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
   <Extern href="stdidcmd.h"/>
@@ -7,31 +7,10 @@
   <Include href="VSGlobals.vsct"/>
 
   <Commands package="SelectedWhitespace">
-    <Groups>
-      <Group guid="SelectedWhitespace" id="MyMenuGroup" priority="0x0600">
-        <Parent guid="VSMainMenu" id="Tools"/>
-      </Group>
-    </Groups>
-
-    <!--This section defines the elements the user can interact with, like a menu command or a button
-        or combo box in a toolbar. -->
-    <Buttons>
-      <Button guid="SelectedWhitespace" id="MyCommand" priority="0x0100" type="Button">
-        <Parent guid="SelectedWhitespace" id="MyMenuGroup" />
-        <Icon guid="ImageCatalogGuid" id="StatusInformation" />
-        <CommandFlag>IconIsMoniker</CommandFlag>
-        <Strings>
-          <ButtonText>My Command</ButtonText>
-          <LocCanonicalName>.SelectedWhitespace.MyCommand</LocCanonicalName>
-        </Strings>
-      </Button>
-    </Buttons>
   </Commands>
 
   <Symbols>
     <GuidSymbol name="SelectedWhitespace" value="{03a7542b-6cef-4616-b2aa-827cb8262d29}">
-      <IDSymbol name="MyMenuGroup" value="0x0001" />
-      <IDSymbol name="MyCommand" value="0x0100" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>
