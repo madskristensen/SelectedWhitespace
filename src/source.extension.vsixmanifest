@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="SelectedWhitespace.63944e24-4aa2-4d0a-8161-4b7eb9f39831" Version="1.0" Language="en-US" Publisher="Mads Kristensen" />
+        <Identity Id="SelectedWhitespace.63944e24-4aa2-4d0a-8161-4b7eb9f39831" Version="1.0.900" Language="en-US" Publisher="Mads Kristensen" />
         <DisplayName>Selected Whitespace</DisplayName>
         <Description xml:space="preserve">Displays whitespace characters (spaces, tabs, line endings) only within selected text. Keep your editor clean while still being able to inspect whitespace when needed.</Description>
         <Icon>Resources\Icon.png</Icon>

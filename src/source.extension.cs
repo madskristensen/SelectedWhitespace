@@ -10,9 +10,9 @@ namespace SelectedWhitespace
     {
         public const string Id = "SelectedWhitespace.63944e24-4aa2-4d0a-8161-4b7eb9f39831";
         public const string Name = "Selected Whitespace";
-        public const string Description = @"Empty VSIX Project.";
+        public const string Description = @"Displays whitespace characters (spaces, tabs, line endings) only within selected text. Keep your editor clean while still being able to inspect whitespace when needed.";
         public const string Language = "en-US";
-        public const string Version = "1.0";
+        public const string Version = "1.0.900";
         public const string Author = "Mads Kristensen";
         public const string Tags = "";
         public const bool IsPreview = false;
