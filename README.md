@@ -15,6 +15,8 @@ Download this extension from the [Visual Studio Marketplace][marketplace].
 
 Select any text to instantly reveal its whitespace characters:
 
+![Selection Mode](art/selection-mode.png)
+
 | Character | Symbol | Description |
 |-----------|--------|-------------|
 | Space | `·` | Middle dot |
@@ -28,6 +30,8 @@ Line endings include tooltips explaining their type (e.g., "CRLF (Windows)").
 ### Extended View White Space Mode
 
 When Visual Studio's built-in **View White Space** setting is enabled (Edit → Advanced → View White Space, or `Ctrl+R, Ctrl+W`), this extension enhances it by also displaying line endings throughout the document. VS normally only shows spaces and tabs.
+
+![Whitespace Extended](art/whitespace-extended.png)
 
 ### Smart Behavior
 

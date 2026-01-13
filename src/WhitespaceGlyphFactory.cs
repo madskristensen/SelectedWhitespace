@@ -9,8 +9,8 @@ namespace SelectedWhitespace
     /// </summary>
     internal static class WhitespaceGlyphFactory
     {
-        private static Brush _whitespaceBrush;
-        private static Brush _lineEndingBrush;
+        private static readonly Brush _whitespaceBrush;
+        private static readonly Brush _lineEndingBrush;
 
         static WhitespaceGlyphFactory()
         {

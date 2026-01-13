@@ -5,6 +5,16 @@
     "internalName": "SelectedWhitespace",
     "tags": [ "whitespace", "spaces", "tabs", "selection", "editor", "visualization" ]
   },
+  "assetFiles": [
+    {
+      "pathOnDisk": "art/selection-mode.png",
+      "targetPath": "art/selection-mode-png"
+    },
+    {
+      "pathOnDisk": "art/whitespace-extended.png",
+      "targetPath": "art/whitespace-extended-png"
+    }
+  ],
   "overview": "README.md",
   "publisher": "MadsKristensen",
   "repo": "https://github.com/madskristensen/SelectedWhitespace"

@@ -150,32 +150,32 @@ namespace SelectedWhitespace
                         continue;
                     }
 
-                                        var charSpan = new SnapshotSpan(snapshot, charPosition, 1);
+                    var charSpan = new SnapshotSpan(snapshot, charPosition, 1);
 
-                                        DrawWhitespaceGlyph(charSpan, symbol, isLineEnding);
+                    DrawWhitespaceGlyph(charSpan, symbol, isLineEnding);
 
-                                        if (charCount == 2)
-                                        {
-                                            i++; // Skip the \n in CRLF
-                                        }
-                                    }
-                                }
-                            }
+                    if (charCount == 2)
+                    {
+                        i++; // Skip the \n in CRLF
+                    }
+                }
+            }
+        }
 
-                                    private void DrawWhitespaceGlyph(SnapshotSpan charSpan, string symbol, bool isLineEnding)
-                                    {
-                                        Geometry geometry = _view.TextViewLines.GetMarkerGeometry(charSpan);
-                                        if (geometry == null)
-                                            return;
+        private void DrawWhitespaceGlyph(SnapshotSpan charSpan, string symbol, bool isLineEnding)
+        {
+            Geometry geometry = _view.TextViewLines.GetMarkerGeometry(charSpan);
+            if (geometry == null)
+                return;
 
-                                        Rect bounds = geometry.Bounds;
-                                        var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
+            Rect bounds = geometry.Bounds;
+            var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
 
-                                        // For line endings, don't constrain width (multi-char symbols like "\r\n" need space)
-                                        // For spaces/tabs, use character width to center the glyph
-                                        // Never constrain height to avoid vertical clipping
-                                        // Add left margin for line endings to offset from selection
-                                        var textBlock = WhitespaceGlyphFactory.CreateGlyph(
+            // For line endings, don't constrain width (multi-char symbols like "\r\n" need space)
+            // For spaces/tabs, use character width to center the glyph
+            // Never constrain height to avoid vertical clipping
+            // Add left margin for line endings to offset from selection
+            TextBlock textBlock = WhitespaceGlyphFactory.CreateGlyph(
                                             symbol,
                                             _typeface,
                                             baseFontSize,
@@ -183,17 +183,17 @@ namespace SelectedWhitespace
                                             width: isLineEnding ? null : bounds.Width,
                                             leftMargin: isLineEnding ? Constants.LineEndingLeftMargin : 0);
 
-                                        var top = bounds.Top + WhitespaceGlyphFactory.GetBaselineAlignmentOffset(baseFontSize, isLineEnding);
+            var top = bounds.Top + WhitespaceGlyphFactory.GetBaselineAlignmentOffset(baseFontSize, isLineEnding);
 
-                                        Canvas.SetLeft(textBlock, bounds.Left);
-                                        Canvas.SetTop(textBlock, top);
+            Canvas.SetLeft(textBlock, bounds.Left);
+            Canvas.SetTop(textBlock, top);
 
-                                        _layer.AddAdornment(
-                                            AdornmentPositioningBehavior.TextRelative,
-                                            charSpan,
-                                            null,
-                                            textBlock,
-                                            null);
-                                    }
-                                }
-                            }
+            _layer.AddAdornment(
+                AdornmentPositioningBehavior.TextRelative,
+                charSpan,
+                null,
+                textBlock,
+                null);
+        }
+    }
+}

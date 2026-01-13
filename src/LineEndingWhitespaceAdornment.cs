@@ -1,4 +1,3 @@
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.TextFormatting;
@@ -134,7 +133,7 @@ namespace SelectedWhitespace
             var left = line.TextRight;
             var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
 
-            var textBlock = WhitespaceGlyphFactory.CreateGlyph(
+            TextBlock textBlock = WhitespaceGlyphFactory.CreateGlyph(
                 symbol,
                 _typeface,
                 baseFontSize,
