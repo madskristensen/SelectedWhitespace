@@ -17,7 +17,6 @@ namespace SelectedWhitespace
     {
         private readonly IWpfTextView _view;
         private readonly IAdornmentLayer _layer;
-        private Brush _whitespaceBrush;
         private Typeface _typeface;
         private bool _isEnabled;
 
@@ -26,7 +25,7 @@ namespace SelectedWhitespace
             _view = view ?? throw new ArgumentNullException(nameof(view));
             _layer = view.GetAdornmentLayer(AdornmentLayers.LineEndingWhitespace);
 
-            UpdateBrushAndTypeface();
+            UpdateTypeface();
 
             // Check initial state
             _isEnabled = _view.Options.IsVisibleWhitespaceEnabled();
@@ -38,32 +37,23 @@ namespace SelectedWhitespace
             if (_isEnabled)
             {
                 RedrawAdornments();
-                }
             }
+        }
 
-            private void UpdateBrushAndTypeface()
+        private void UpdateTypeface()
+        {
+            TextRunProperties textProperties = _view.FormattedLineSource?.DefaultTextProperties;
+            _typeface = textProperties?.Typeface ?? new Typeface("Consolas");
+        }
+
+        private void OnOptionChanged(object sender, EditorOptionChangedEventArgs e)
+        {
+            if (e.OptionId == DefaultTextViewOptions.UseVisibleWhitespaceName)
             {
-                // Use a medium gray with slight transparency for line endings
-                _whitespaceBrush = new SolidColorBrush(Color.FromArgb(
-                    Constants.LineEndingOpacity,
-                    Constants.WhitespaceGrayLevel,
-                    Constants.WhitespaceGrayLevel,
-                    Constants.WhitespaceGrayLevel));
-                _whitespaceBrush.Freeze();
-
-                // Get the editor's typeface
-                TextRunProperties textProperties = _view.FormattedLineSource?.DefaultTextProperties;
-                _typeface = textProperties?.Typeface ?? new Typeface("Consolas");
+                _isEnabled = _view.Options.IsVisibleWhitespaceEnabled();
+                RedrawAdornments();
             }
-
-            private void OnOptionChanged(object sender, EditorOptionChangedEventArgs e)
-            {
-                if (e.OptionId == DefaultTextViewOptions.UseVisibleWhitespaceName)
-                {
-                    _isEnabled = _view.Options.IsVisibleWhitespaceEnabled();
-                    RedrawAdornments();
-                }
-            }
+        }
 
         private void OnViewClosed(object sender, EventArgs e)
         {
@@ -91,12 +81,7 @@ namespace SelectedWhitespace
             if (!_isEnabled)
                 return;
 
-            // Update typeface if needed
-            TextRunProperties textProperties = _view.FormattedLineSource?.DefaultTextProperties;
-            if (textProperties != null)
-            {
-                _typeface = textProperties.Typeface;
-            }
+            UpdateTypeface();
 
             // Draw line endings for all visible lines
             foreach (ITextViewLine line in _view.TextViewLines)
@@ -138,42 +123,35 @@ namespace SelectedWhitespace
                 tooltip = Constants.LfTooltip;
             }
 
-                if (symbol != null)
-                {
-                    DrawLineEndingGlyph(line, symbol, tooltip);
-                }
-                    }
-
-                    private void DrawLineEndingGlyph(ITextViewLine line, string symbol, string tooltip)
-                    {
-                        // Position at the end of the line text
-                        var left = line.TextRight;
-                        var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
-                        var fontSize = baseFontSize + Constants.LineEndingFontSizeOffset;
-
-                        // Adjust top position to align baseline with the text
-                        // The smaller font needs to be pushed down to align
-                        var top = line.TextTop + (baseFontSize - fontSize);
-
-                        var textBlock = new TextBlock
-                        {
-                            Text = symbol,
-                            FontFamily = _typeface.FontFamily,
-                            FontSize = fontSize,
-                            FontStyle = FontStyles.Italic,
-                            Foreground = _whitespaceBrush,
-                            ToolTip = tooltip
-                        };
-
-                        Canvas.SetLeft(textBlock, left);
-                        Canvas.SetTop(textBlock, top);
-
-                        _layer.AddAdornment(
-                            AdornmentPositioningBehavior.TextRelative,
-                            line.Extent,
-                            null,
-                            textBlock,
-                            null);
-                    }
-                }
+            if (symbol != null)
+            {
+                DrawLineEndingGlyph(line, symbol, tooltip);
             }
+        }
+
+        private void DrawLineEndingGlyph(ITextViewLine line, string symbol, string tooltip)
+        {
+            var left = line.TextRight;
+            var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
+
+            var textBlock = WhitespaceGlyphFactory.CreateGlyph(
+                symbol,
+                _typeface,
+                baseFontSize,
+                isLineEnding: true,
+                tooltip: tooltip);
+
+            var top = line.TextTop + WhitespaceGlyphFactory.GetBaselineAlignmentOffset(baseFontSize, isLineEnding: true);
+
+            Canvas.SetLeft(textBlock, left);
+            Canvas.SetTop(textBlock, top);
+
+            _layer.AddAdornment(
+                AdornmentPositioningBehavior.TextRelative,
+                line.Extent,
+                null,
+                textBlock,
+                null);
+        }
+    }
+}

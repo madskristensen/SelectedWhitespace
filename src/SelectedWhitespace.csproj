@@ -64,6 +64,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>VSCommandTable.vsct</DependentUpon>
     </Compile>
+    <Compile Include="WhitespaceGlyphFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\LICENSE.txt" />

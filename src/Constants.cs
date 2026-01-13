@@ -17,9 +17,10 @@ namespace SelectedWhitespace
         public const string LfTooltip = "LF (Unix/macOS)";
         public const string CrTooltip = "CR (Classic Mac)";
 
-                // Default color for whitespace glyphs (medium gray)
-                public const byte WhitespaceGrayLevel = 128;
-                public const byte LineEndingOpacity = 140;  // More transparent (0-255)
-                public const double LineEndingFontSizeOffset = -3.0;  // 3pt smaller
-            }
-        }
+        // Default color for whitespace glyphs (medium gray)
+        public const byte WhitespaceGrayLevel = 128;
+        public const byte LineEndingOpacity = 140;  // More transparent (0-255)
+        public const double LineEndingFontSizeOffset = -3.0;  // 3pt smaller
+        public const double LineEndingLeftMargin = 7.0;  // Pixels to offset line endings from selection
+    }
+}

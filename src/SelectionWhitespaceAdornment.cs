@@ -19,8 +19,6 @@ namespace SelectedWhitespace
         private readonly IWpfTextView _view;
         private readonly IAdornmentLayer _layer;
         private readonly IOutliningManager _outliningManager;
-        private Brush _whitespaceBrush;
-        private Brush _lineEndingBrush;
         private Typeface _typeface;
 
         public SelectionWhitespaceAdornment(IWpfTextView view, IOutliningManager outliningManager)
@@ -29,7 +27,7 @@ namespace SelectedWhitespace
             _layer = view.GetAdornmentLayer(AdornmentLayers.SelectionWhitespace);
             _outliningManager = outliningManager;
 
-            UpdateWhitespaceBrush();
+            UpdateTypeface();
 
             _view.Selection.SelectionChanged += OnSelectionChanged;
             _view.LayoutChanged += OnLayoutChanged;
@@ -37,24 +35,8 @@ namespace SelectedWhitespace
             _view.Closed += OnViewClosed;
         }
 
-        private void UpdateWhitespaceBrush()
+        private void UpdateTypeface()
         {
-            // Use a medium gray that's visible on both light and dark themes
-            _whitespaceBrush = new SolidColorBrush(Color.FromRgb(
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel));
-            _whitespaceBrush.Freeze();
-
-            // Line endings are slightly transparent
-            _lineEndingBrush = new SolidColorBrush(Color.FromArgb(
-                Constants.LineEndingOpacity,
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel));
-            _lineEndingBrush.Freeze();
-
-            // Get the editor's typeface
             TextRunProperties textProperties = _view.FormattedLineSource?.DefaultTextProperties;
             _typeface = textProperties?.Typeface ?? new Typeface("Consolas");
         }
@@ -101,12 +83,7 @@ namespace SelectedWhitespace
             if (_view.Selection.IsEmpty)
                 return;
 
-            // Update typeface if needed
-            TextRunProperties textProperties = _view.FormattedLineSource?.DefaultTextProperties;
-            if (textProperties != null)
-            {
-                _typeface = textProperties.Typeface;
-            }
+            UpdateTypeface();
 
             foreach (SnapshotSpan span in _view.Selection.SelectedSpans)
             {
@@ -131,6 +108,7 @@ namespace SelectedWhitespace
                 string symbol = null;
                 var charCount = 1;
                 var isLineEnding = false;
+
 
                 if (c == ' ')
                 {
@@ -172,7 +150,7 @@ namespace SelectedWhitespace
                         continue;
                     }
 
-                    var charSpan = new SnapshotSpan(snapshot, charPosition, 1);
+                                        var charSpan = new SnapshotSpan(snapshot, charPosition, 1);
 
                                         DrawWhitespaceGlyph(charSpan, symbol, isLineEnding);
 
@@ -184,47 +162,38 @@ namespace SelectedWhitespace
                                 }
                             }
 
-                            private void DrawWhitespaceGlyph(SnapshotSpan charSpan, string symbol, bool isLineEnding)
-                            {
-                                Geometry geometry = _view.TextViewLines.GetMarkerGeometry(charSpan);
-                                if (geometry == null)
-                                    return;
+                                    private void DrawWhitespaceGlyph(SnapshotSpan charSpan, string symbol, bool isLineEnding)
+                                    {
+                                        Geometry geometry = _view.TextViewLines.GetMarkerGeometry(charSpan);
+                                        if (geometry == null)
+                                            return;
 
-                                Rect bounds = geometry.Bounds;
-                                var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
-                                var fontSize = baseFontSize;
+                                        Rect bounds = geometry.Bounds;
+                                        var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
 
-                                // Line endings are smaller and use transparent brush
-                                if (isLineEnding)
-                                {
-                                    fontSize += Constants.LineEndingFontSizeOffset;
+                                        // For line endings, don't constrain width (multi-char symbols like "\r\n" need space)
+                                        // For spaces/tabs, use character width to center the glyph
+                                        // Never constrain height to avoid vertical clipping
+                                        // Add left margin for line endings to offset from selection
+                                        var textBlock = WhitespaceGlyphFactory.CreateGlyph(
+                                            symbol,
+                                            _typeface,
+                                            baseFontSize,
+                                            isLineEnding,
+                                            width: isLineEnding ? null : bounds.Width,
+                                            leftMargin: isLineEnding ? Constants.LineEndingLeftMargin : 0);
+
+                                        var top = bounds.Top + WhitespaceGlyphFactory.GetBaselineAlignmentOffset(baseFontSize, isLineEnding);
+
+                                        Canvas.SetLeft(textBlock, bounds.Left);
+                                        Canvas.SetTop(textBlock, top);
+
+                                        _layer.AddAdornment(
+                                            AdornmentPositioningBehavior.TextRelative,
+                                            charSpan,
+                                            null,
+                                            textBlock,
+                                            null);
+                                    }
                                 }
-
-                                var textBlock = new TextBlock
-                                {
-                                    Text = symbol,
-                                    FontFamily = _typeface.FontFamily,
-                                    FontSize = fontSize,
-                                    FontStyle = isLineEnding ? FontStyles.Italic : FontStyles.Normal,
-                                    Foreground = isLineEnding ? _lineEndingBrush : _whitespaceBrush,
-                                    // Center the glyph in the character cell
-                                    TextAlignment = TextAlignment.Center,
-                                    Width = bounds.Width,
-                                    Height = bounds.Height
-                                };
-
-                                // Adjust top position for smaller font to align baseline
-                                var top = isLineEnding ? bounds.Top + (baseFontSize - fontSize) : bounds.Top;
-
-                                Canvas.SetLeft(textBlock, bounds.Left);
-                                Canvas.SetTop(textBlock, top);
-
-                                _layer.AddAdornment(
-                                    AdornmentPositioningBehavior.TextRelative,
-                                    charSpan,
-                                    null,
-                                    textBlock,
-                                    null);
                             }
-                        }
-                    }
