@@ -1,13 +1,16 @@
 [marketplace]: https://marketplace.visualstudio.com/items?itemName=MadsKristensen.SelectedWhitespace
+[vsixgallery]: http://vsixgallery.com/extension/SelectedWhitespace.63944e24-4aa2-4d0a-8161-4b7eb9f39831/
 [repo]: https://github.com/madskristensen/SelectedWhitespace
 
 # Selected Whitespace
 
-Download this extension from the [Visual Studio Marketplace][marketplace].
+Download this extension from the [Visual Studio Marketplace][marketplace] or get the [CI build][vsixgallery]
 
 --------------------------------------
 
 **See whitespace characters only when you need them.** This extension displays whitespace characters (spaces, tabs, and line endings) only within selected text, keeping your editor clean and clutter-free.
+
+> Inspired by a community Visual Studio [feature request](https://developercommunity.visualstudio.com/t/Option-to-only-display-whitespace-charac/1516269). Go vote for it!
 
 ## Features
 
