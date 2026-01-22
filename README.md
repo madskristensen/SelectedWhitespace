@@ -1,6 +1,6 @@
-[marketplace]: https://marketplace.visualstudio.com/items?itemName=MadsKristensen.SelectedWhitespace
-[vsixgallery]: http://vsixgallery.com/extension/SelectedWhitespace.63944e24-4aa2-4d0a-8161-4b7eb9f39831/
-[repo]: https://github.com/madskristensen/SelectedWhitespace
+[marketplace]: <https://marketplace.visualstudio.com/items?itemName=MadsKristensen.SelectedWhitespace>
+[vsixgallery]: <http://vsixgallery.com/extension/SelectedWhitespace.63944e24-4aa2-4d0a-8161-4b7eb9f39831/>
+[repo]: <https://github.com/madskristensen/SelectedWhitespace>
 
 # Selected Whitespace
 
@@ -20,13 +20,13 @@ Select any text to instantly reveal its whitespace characters:
 
 ![Selection Mode](art/selection-mode.png)
 
-| Character | Symbol | Description |
-|-----------|--------|-------------|
-| Space | `·` | Middle dot |
-| Tab | `→` | Rightwards arrow |
-| CRLF | `\r\n` | Windows line ending |
-| LF | `\n` | Unix/macOS line ending |
-| CR | `\r` | Classic Mac line ending |
+| Character | Symbol | Description             |
+| --------- | ------ | ----------------------- |
+| Space     | `·`    | Middle dot              |
+| Tab       | `→`    | Rightwards arrow        |
+| CRLF      | `\r\n` | Windows line ending     |
+| LF        | `\n`   | Unix/macOS line ending  |
+| CR        | `\r`   | Classic Mac line ending |
 
 Line endings include tooltips explaining their type (e.g., "CRLF (Windows)").
 
