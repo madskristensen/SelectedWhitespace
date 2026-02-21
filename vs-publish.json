@@ -17,5 +17,6 @@
   ],
   "overview": "README.md",
   "publisher": "MadsKristensen",
+  "private": false,
   "repo": "https://github.com/madskristensen/SelectedWhitespace"
 }
