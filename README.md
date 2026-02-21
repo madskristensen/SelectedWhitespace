@@ -2,7 +2,7 @@
 [vsixgallery]: <http://vsixgallery.com/extension/SelectedWhitespace.63944e24-4aa2-4d0a-8161-4b7eb9f39831/>
 [repo]: <https://github.com/madskristensen/SelectedWhitespace>
 
-# Selected Whitespace
+# Whitespace Visualizer
 
 Download this extension from the [Visual Studio Marketplace][marketplace] or get the [CI build][vsixgallery]
 
