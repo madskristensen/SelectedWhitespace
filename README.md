@@ -20,13 +20,13 @@ Select any text to instantly reveal its whitespace characters:
 
 ![Selection Mode](art/selection-mode.png)
 
-| Character | Symbol | Description             |
-| --------- | ------ | ----------------------- |
-| Space     | `·`    | Middle dot              |
-| Tab       | `→`    | Rightwards arrow        |
-| CRLF      | `\r\n` | Windows line ending     |
-| LF        | `\n`   | Unix/macOS line ending  |
-| CR        | `\r`   | Classic Mac line ending |
+| Character | Symbol   | Description             |
+| --------- | -------- | ----------------------- |
+| Space     | `·`      | Middle dot              |
+| Tab       | `→`      | Rightwards arrow        |
+| CRLF      | *`CRLF`* | Windows line ending     |
+| LF        | *`LF`*   | Unix/macOS line ending  |
+| CR        | *`CR`*   | Classic Mac line ending |
 
 Line endings include tooltips explaining their type (e.g., "CRLF (Windows)").
 
