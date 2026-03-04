@@ -12,7 +12,7 @@ namespace SelectedWhitespace
         public const string Name = "Whitespace Visualizer";
         public const string Description = @"Displays whitespace characters (spaces, tabs, line endings) only within selected text. Keep your editor clean while still being able to inspect whitespace when needed.";
         public const string Language = "en-US";
-        public const string Version = "1.0.900";
+        public const string Version = "1.0.901";
         public const string Author = "Mads Kristensen";
         public const string Tags = "whitespace, spaces, tabs";
         public const bool IsPreview = false;

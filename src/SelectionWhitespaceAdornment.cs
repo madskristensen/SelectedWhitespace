@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,6 +18,13 @@ namespace SelectedWhitespace
     /// </summary>
     internal sealed class SelectionWhitespaceAdornment
     {
+        private enum WhitespaceRunContext
+        {
+            Indentation,
+            Inline,
+            Trailing
+        }
+
         private readonly IWpfTextView _view;
         private readonly IAdornmentLayer _layer;
         private readonly IOutliningManager _outliningManager;
@@ -102,84 +110,121 @@ namespace SelectedWhitespace
                 .GetCollapsedRegions(selectionSpan)
                 .Select(r => r.Extent.GetSpan(snapshot))
                 .ToList();
+            WhitespaceOptions options = WhitespaceOptions.Instance;
+            var minimumWhitespaceRunLength = Math.Max(1, options.MinimumWhitespaceRunLength);
 
             for (var i = 0; i < text.Length; i++)
             {
                 var c = text[i];
-                string symbol = null;
-                var charCount = 1;
-                var isLineEnding = false;
-
-
-                if (c == ' ')
+                if (c == ' ' || c == '\t')
                 {
-                    symbol = Constants.SpaceDot.ToString();
-                }
-                else if (c == '\t')
-                {
-                    symbol = Constants.TabArrow.ToString();
+                    var runStart = i;
+                    while (i + 1 < text.Length && (text[i + 1] == ' ' || text[i + 1] == '\t'))
+                    {
+                        i++;
+                    }
+
+                    var runLength = (i - runStart) + 1;
+                    var runContext = GetWhitespaceRunContext(text, runStart, i);
+                    if (!ShouldRenderWhitespaceRun(runContext, runLength, minimumWhitespaceRunLength, options))
+                        continue;
+
+                    for (var runIndex = runStart; runIndex <= i; runIndex++)
+                    {
+                        var symbol = text[runIndex] == '\t'
+                            ? Constants.TabArrow.ToString()
+                            : Constants.SpaceDot.ToString();
+
+                        DrawWhitespaceGlyphAtPosition(snapshot, selectionSpan, collapsedRegions, runIndex, symbol, isLineEnding: false);
+                    }
                 }
                 else if (c == '\r')
                 {
-                    isLineEnding = true;
-                    // Check for CRLF
+                    var symbol = Constants.CrSymbol;
+                    var charCount = 1;
+
                     if (i + 1 < text.Length && text[i + 1] == '\n')
                     {
                         symbol = Constants.CrlfSymbol;
                         charCount = 2;
                     }
-                    else
+
+                    DrawWhitespaceGlyphAtPosition(snapshot, selectionSpan, collapsedRegions, i, symbol, isLineEnding: true);
+                    if (charCount == 2)
                     {
-                        symbol = Constants.CrSymbol;
+                        i++;
                     }
                 }
                 else if (c == '\n')
                 {
-                    isLineEnding = true;
-                    symbol = Constants.LfSymbol;
-                }
-
-                if (symbol != null)
-                {
-                    var charPosition = selectionSpan.Start.Position + i;
-
-                    // Skip if this position is inside a collapsed region
-                    if (collapsedRegions != null && collapsedRegions.Any(r => r.Contains(charPosition)))
-                    {
-                        if (charCount == 2)
-                            i++;
-                        continue;
-                    }
-
-                    // Skip if position is not on a visible line (e.g., elided content from other extensions)
-                    ITextViewLine textViewLine = _view.TextViewLines.GetTextViewLineContainingBufferPosition(
-                        new SnapshotPoint(snapshot, charPosition));
-                    if (textViewLine == null)
-                    {
-                        if (charCount == 2)
-                            i++;
-                        continue;
-                    }
-
-                    // For line endings, only draw if the position matches the visible line's end
-                    // (matches behavior of LineEndingWhitespaceAdornment which iterates visible lines)
-                    if (isLineEnding && charPosition != textViewLine.End.Position)
-                    {
-                        if (charCount == 2)
-                            i++;
-                        continue;
-                    }
-
-                    var charSpan = new SnapshotSpan(snapshot, charPosition, 1);
-
-                    DrawWhitespaceGlyph(charSpan, symbol, isLineEnding);
-
-                    if (charCount == 2)
-                    {
-                        i++; // Skip the \n in CRLF
-                    }
+                    DrawWhitespaceGlyphAtPosition(snapshot, selectionSpan, collapsedRegions, i, Constants.LfSymbol, isLineEnding: true);
                 }
             }
+        }
+
+        private static WhitespaceRunContext GetWhitespaceRunContext(string text, int runStart, int runEnd)
+        {
+            var isAtLineStart = runStart == 0 || text[runStart - 1] == '\r' || text[runStart - 1] == '\n';
+            var isAtLineEnd = runEnd + 1 >= text.Length || text[runEnd + 1] == '\r' || text[runEnd + 1] == '\n';
+
+            if (isAtLineEnd)
+                return WhitespaceRunContext.Trailing;
+
+            if (isAtLineStart)
+                return WhitespaceRunContext.Indentation;
+
+            return WhitespaceRunContext.Inline;
+        }
+
+        private static bool ShouldRenderWhitespaceRun(WhitespaceRunContext runContext, int runLength, int minimumWhitespaceRunLength, WhitespaceOptions options)
+        {
+            if (options.ShowOnlyMultipleWhitespaceRuns && runLength < minimumWhitespaceRunLength)
+                return false;
+
+            if (!options.EnableContextAwareFiltering)
+                return true;
+
+            switch (runContext)
+            {
+                case WhitespaceRunContext.Indentation:
+                    return options.ShowIndentationWhitespaceRuns;
+
+                case WhitespaceRunContext.Inline:
+                    return options.ShowInlineWhitespaceRuns;
+
+                case WhitespaceRunContext.Trailing:
+                    return options.ShowTrailingWhitespaceRuns;
+
+                default:
+                    return true;
+            }
+        }
+
+        private bool DrawWhitespaceGlyphAtPosition(
+            ITextSnapshot snapshot,
+            SnapshotSpan selectionSpan,
+            List<SnapshotSpan> collapsedRegions,
+            int indexInSelection,
+            string symbol,
+            bool isLineEnding)
+        {
+            var charPosition = selectionSpan.Start.Position + indexInSelection;
+
+            if (collapsedRegions != null && collapsedRegions.Any(r => r.Contains(charPosition)))
+                return false;
+
+            ITextViewLine textViewLine = _view.TextViewLines.GetTextViewLineContainingBufferPosition(
+                new SnapshotPoint(snapshot, charPosition));
+            if (textViewLine == null)
+                return false;
+
+            if (isLineEnding && charPosition != textViewLine.End.Position)
+                return false;
+
+            var charSpan = new SnapshotSpan(snapshot, charPosition, 1);
+            DrawWhitespaceGlyph(charSpan, symbol, isLineEnding);
+
+            return true;
         }
 
         private void DrawWhitespaceGlyph(SnapshotSpan charSpan, string symbol, bool isLineEnding)

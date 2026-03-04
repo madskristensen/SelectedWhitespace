@@ -22,5 +22,15 @@ namespace SelectedWhitespace
         public const byte LineEndingOpacity = 140;  // More transparent (0-255)
         public const double LineEndingFontSizeOffset = -2.0;  // Slightly smaller than code text
         public const double LineEndingLeftMargin = 8.0;  // Pixels to offset line endings from selection
+
+        // Whitespace filtering behavior
+        public const bool ShowOnlyMultipleWhitespaceRuns = true;
+        public const int MinimumWhitespaceRunLength = 2;
+
+        // Context-aware whitespace filtering
+        public const bool EnableContextAwareFiltering = true;
+        public const bool ShowIndentationWhitespaceRuns = false;
+        public const bool ShowInlineWhitespaceRuns = true;
+        public const bool ShowTrailingWhitespaceRuns = true;
     }
 }
