@@ -9,27 +9,25 @@ namespace SelectedWhitespace
     /// </summary>
     internal static class WhitespaceGlyphFactory
     {
-        private static readonly Brush _whitespaceBrush;
-        private static readonly Brush _lineEndingBrush;
-
-        static WhitespaceGlyphFactory()
+        public static Brush CreateWhitespaceBrush(WhitespaceOptions options)
         {
-            _whitespaceBrush = new SolidColorBrush(Color.FromRgb(
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel));
-            _whitespaceBrush.Freeze();
+            byte grayLevel = options?.WhitespaceGrayLevel ?? Constants.WhitespaceGrayLevel;
+            byte opacity = options?.WhitespaceOpacity ?? Constants.WhitespaceOpacity;
 
-            _lineEndingBrush = new SolidColorBrush(Color.FromArgb(
-                Constants.LineEndingOpacity,
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel,
-                Constants.WhitespaceGrayLevel));
-            _lineEndingBrush.Freeze();
+            var brush = new SolidColorBrush(Color.FromArgb(opacity, grayLevel, grayLevel, grayLevel));
+            brush.Freeze();
+            return brush;
         }
 
-        public static Brush WhitespaceBrush => _whitespaceBrush;
-        public static Brush LineEndingBrush => _lineEndingBrush;
+        public static Brush CreateLineEndingBrush(WhitespaceOptions options)
+        {
+            byte grayLevel = options?.WhitespaceGrayLevel ?? Constants.WhitespaceGrayLevel;
+            byte opacity = options?.LineEndingOpacity ?? Constants.LineEndingOpacity;
+
+            var brush = new SolidColorBrush(Color.FromArgb(opacity, grayLevel, grayLevel, grayLevel));
+            brush.Freeze();
+            return brush;
+        }
 
         /// <summary>
         /// Creates a TextBlock for displaying a whitespace glyph.
@@ -39,6 +37,7 @@ namespace SelectedWhitespace
             Typeface typeface,
             double baseFontSize,
             bool isLineEnding,
+            Brush foreground,
             double? width = null,
             double? height = null,
             string tooltip = null,
@@ -56,7 +55,7 @@ namespace SelectedWhitespace
                 FontFamily = typeface.FontFamily,
                 FontSize = fontSize,
                 FontStyle = isLineEnding ? FontStyles.Italic : FontStyles.Normal,
-                Foreground = isLineEnding ? _lineEndingBrush : _whitespaceBrush,
+                Foreground = foreground,
             };
 
             if (leftMargin > 0)

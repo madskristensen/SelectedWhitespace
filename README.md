@@ -43,6 +43,8 @@ When Visual Studio's built-in **View White Space** setting is enabled (Edit → 
 - **Non-intrusive** - Uses subtle gray coloring that doesn't distract from your code
 - **Run-aware** - Can show only whitespace runs with 2+ consecutive spaces/tabs
 - **Context-aware** - Can filter runs by indentation, inline, and trailing whitespace contexts
+- **Configurable symbols** - Customize symbols for spaces, tabs, and line endings
+- **Performance guardrails** - Configurable redraw delay and rendering limits for large files/selections
 
 ## Options
 
@@ -50,6 +52,20 @@ Configure behavior under **Tools → Options → Whitespace Visualizer → Gener
 
 Available settings:
 
+- **Space symbol**
+- **Tab symbol**
+- **CRLF symbol**
+- **LF symbol**
+- **CR symbol**
+- **Whitespace gray level**
+- **Whitespace opacity**
+- **Line ending opacity**
+- **Show line endings in selection mode**
+- **Show line endings with View White Space**
+- **Selection redraw delay (ms)**
+- **Maximum glyphs per redraw**
+- **Maximum file length**
+- **Maximum selection length**
 - **Show only multiple whitespace runs**
 - **Minimum whitespace run length**
 - **Enable context-aware filtering**
@@ -63,6 +79,7 @@ Default behavior is tuned to reduce noise:
 - Inline multi-whitespace runs are shown
 - Trailing multi-whitespace runs are shown
 - Indentation runs are hidden
+- Selection redraw delay defaults to 40ms to reduce rendering churn during rapid selection changes
 
 ## How It Works
 

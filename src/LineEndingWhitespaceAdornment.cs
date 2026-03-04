@@ -19,6 +19,7 @@ namespace SelectedWhitespace
         private readonly IAdornmentLayer _layer;
         private readonly HashSet<int> _activeLineTags = new HashSet<int>();
         private Typeface _typeface;
+        private Brush _lineEndingBrush = Brushes.Gray;
         private bool _isEnabled;
 
         public LineEndingWhitespaceAdornment(IWpfTextView view)
@@ -68,6 +69,24 @@ namespace SelectedWhitespace
             if (!_isEnabled)
                 return;
 
+            WhitespaceOptions options = WhitespaceOptions.Instance;
+            if (!options.ShowLineEndingMarkersWhenViewWhitespaceEnabled)
+            {
+                _layer.RemoveAllAdornments();
+                _activeLineTags.Clear();
+                return;
+            }
+
+            if (options.MaximumFileLengthForAdornmentRendering > 0 &&
+                _view.TextSnapshot.Length > options.MaximumFileLengthForAdornmentRendering)
+            {
+                _layer.RemoveAllAdornments();
+                _activeLineTags.Clear();
+                return;
+            }
+
+            _lineEndingBrush = WhitespaceGlyphFactory.CreateLineEndingBrush(options);
+
             // Refresh only lines that changed layout or were reformatted.
             if (e.NewOrReformattedLines.Count > 0)
             {
@@ -75,7 +94,7 @@ namespace SelectedWhitespace
 
                 foreach (ITextViewLine line in e.NewOrReformattedLines)
                 {
-                    RefreshLineAdornment(line);
+                    RefreshLineAdornment(line, options);
                 }
             }
         }
@@ -88,12 +107,23 @@ namespace SelectedWhitespace
             if (!_isEnabled)
                 return;
 
+            WhitespaceOptions options = WhitespaceOptions.Instance;
+            if (!options.ShowLineEndingMarkersWhenViewWhitespaceEnabled)
+                return;
+
+            if (options.MaximumFileLengthForAdornmentRendering > 0 &&
+                _view.TextSnapshot.Length > options.MaximumFileLengthForAdornmentRendering)
+            {
+                return;
+            }
+
             UpdateTypeface();
+            _lineEndingBrush = WhitespaceGlyphFactory.CreateLineEndingBrush(options);
 
             // Draw line endings for all visible lines
             foreach (ITextViewLine line in _view.TextViewLines)
             {
-                RefreshLineAdornment(line);
+                RefreshLineAdornment(line, options);
             }
         }
 
@@ -124,13 +154,13 @@ namespace SelectedWhitespace
             }
         }
 
-        private void RefreshLineAdornment(ITextViewLine line)
+        private void RefreshLineAdornment(ITextViewLine line, WhitespaceOptions options)
         {
             var tag = GetLineTag(line);
             _layer.RemoveAdornmentsByTag(tag);
             _activeLineTags.Remove(tag);
 
-            DrawLineEndingsForLine(line);
+            DrawLineEndingsForLine(line, options);
         }
 
         private static int GetLineTag(ITextViewLine line)
@@ -138,7 +168,7 @@ namespace SelectedWhitespace
             return line.Start.Position;
         }
 
-        private void DrawLineEndingsForLine(ITextViewLine line)
+        private void DrawLineEndingsForLine(ITextViewLine line, WhitespaceOptions options)
         {
             ITextSnapshot snapshot = line.Snapshot;
             SnapshotPoint lineEnd = line.End;
@@ -156,18 +186,18 @@ namespace SelectedWhitespace
                 // Check for CRLF
                 if (lineEnd.Position + 1 < snapshot.Length && snapshot[lineEnd.Position + 1] == '\n')
                 {
-                    symbol = Constants.CrlfSymbol;
+                    symbol = GetSymbolOrDefault(options.CrlfSymbol, Constants.CrlfSymbol);
                     tooltip = Constants.CrlfTooltip;
                 }
                 else
                 {
-                    symbol = Constants.CrSymbol;
+                    symbol = GetSymbolOrDefault(options.CrSymbol, Constants.CrSymbol);
                     tooltip = Constants.CrTooltip;
                 }
             }
             else if (nextChar == '\n')
             {
-                symbol = Constants.LfSymbol;
+                symbol = GetSymbolOrDefault(options.LfSymbol, Constants.LfSymbol);
                 tooltip = Constants.LfTooltip;
             }
 
@@ -187,6 +217,7 @@ namespace SelectedWhitespace
                 _typeface,
                 baseFontSize,
                 isLineEnding: true,
+                foreground: _lineEndingBrush,
                 tooltip: tooltip);
 
             var top = line.TextTop + WhitespaceGlyphFactory.GetBaselineAlignmentOffset(baseFontSize, isLineEnding: true);
@@ -202,6 +233,13 @@ namespace SelectedWhitespace
                 null);
 
             _activeLineTags.Add(lineTag);
+        }
+
+        private static string GetSymbolOrDefault(string symbol, string defaultValue)
+        {
+            return string.IsNullOrWhiteSpace(symbol)
+                ? defaultValue
+                : symbol;
         }
     }
 }
