@@ -28,6 +28,7 @@ namespace SelectedWhitespace
         private readonly IWpfTextView _view;
         private readonly IAdornmentLayer _layer;
         private readonly IOutliningManager _outliningManager;
+        private readonly HashSet<int> _activeLineTags = new HashSet<int>();
         private Typeface _typeface;
 
         public SelectionWhitespaceAdornment(IWpfTextView view, IOutliningManager outliningManager)
@@ -74,15 +75,30 @@ namespace SelectedWhitespace
 
         private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
-            if (e.NewSnapshot != e.OldSnapshot || e.VerticalTranslation)
+            if (_view.Options.IsVisibleWhitespaceEnabled() || _view.Selection.IsEmpty)
+                return;
+
+            if (e.NewSnapshot != e.OldSnapshot)
             {
                 RedrawAdornments();
+                return;
+            }
+
+            if (e.NewOrReformattedLines.Count > 0)
+            {
+                PruneNonVisibleAdornments();
+
+                foreach (ITextViewLine line in e.NewOrReformattedLines)
+                {
+                    RefreshSelectionWhitespaceForLine(line);
+                }
             }
         }
 
         private void RedrawAdornments()
         {
             _layer.RemoveAllAdornments();
+            _activeLineTags.Clear();
 
             // Don't show selection whitespace when VS's built-in "View White Space" is enabled
             // (VS shows spaces/tabs, and LineEndingWhitespaceAdornment shows line endings)
@@ -98,6 +114,55 @@ namespace SelectedWhitespace
             {
                 DrawWhitespaceInSpan(span);
             }
+        }
+
+        private void PruneNonVisibleAdornments()
+        {
+            if (_activeLineTags.Count == 0)
+                return;
+
+            var visibleTags = new HashSet<int>();
+            foreach (ITextViewLine line in _view.TextViewLines)
+            {
+                visibleTags.Add(GetLineTag(line));
+            }
+
+            var tagsToRemove = new List<int>();
+            foreach (var tag in _activeLineTags)
+            {
+                if (!visibleTags.Contains(tag))
+                {
+                    tagsToRemove.Add(tag);
+                }
+            }
+
+            foreach (var tag in tagsToRemove)
+            {
+                _layer.RemoveAdornmentsByTag(tag);
+                _activeLineTags.Remove(tag);
+            }
+        }
+
+        private void RefreshSelectionWhitespaceForLine(ITextViewLine line)
+        {
+            var lineTag = GetLineTag(line);
+            _layer.RemoveAdornmentsByTag(lineTag);
+            _activeLineTags.Remove(lineTag);
+
+            var lineSpan = line.ExtentIncludingLineBreak;
+            foreach (SnapshotSpan selectedSpan in _view.Selection.SelectedSpans)
+            {
+                var intersection = selectedSpan.Intersection(lineSpan);
+                if (intersection.HasValue)
+                {
+                    DrawWhitespaceInSpan(intersection.Value);
+                }
+            }
+        }
+
+        private static int GetLineTag(ITextViewLine line)
+        {
+            return line.Start.Position;
         }
 
         private void DrawWhitespaceInSpan(SnapshotSpan selectionSpan)
@@ -218,16 +283,18 @@ namespace SelectedWhitespace
             if (textViewLine == null)
                 return false;
 
+            var lineTag = GetLineTag(textViewLine);
+
             if (isLineEnding && charPosition != textViewLine.End.Position)
                 return false;
 
             var charSpan = new SnapshotSpan(snapshot, charPosition, 1);
-            DrawWhitespaceGlyph(charSpan, symbol, isLineEnding);
+            DrawWhitespaceGlyph(charSpan, symbol, isLineEnding, lineTag);
 
             return true;
         }
 
-        private void DrawWhitespaceGlyph(SnapshotSpan charSpan, string symbol, bool isLineEnding)
+        private void DrawWhitespaceGlyph(SnapshotSpan charSpan, string symbol, bool isLineEnding, int lineTag)
         {
             Geometry geometry = _view.TextViewLines.GetMarkerGeometry(charSpan);
             if (geometry == null)
@@ -240,13 +307,17 @@ namespace SelectedWhitespace
             // For spaces/tabs, use character width to center the glyph
             // Never constrain height to avoid vertical clipping
             // Add left margin for line endings to offset from selection
+            var lineEndingLeftMargin = isLineEnding
+                ? Math.Max(0, baseFontSize * Constants.LineEndingLeftMarginScale)
+                : 0;
+
             TextBlock textBlock = WhitespaceGlyphFactory.CreateGlyph(
                                             symbol,
                                             _typeface,
                                             baseFontSize,
                                             isLineEnding,
                                             width: isLineEnding ? null : bounds.Width,
-                                            leftMargin: isLineEnding ? Constants.LineEndingLeftMargin : 0);
+                                            leftMargin: lineEndingLeftMargin);
 
             var top = bounds.Top + WhitespaceGlyphFactory.GetBaselineAlignmentOffset(baseFontSize, isLineEnding);
 
@@ -256,9 +327,11 @@ namespace SelectedWhitespace
             _layer.AddAdornment(
                 AdornmentPositioningBehavior.TextRelative,
                 charSpan,
-                null,
+                lineTag,
                 textBlock,
                 null);
+
+            _activeLineTags.Add(lineTag);
         }
     }
 }

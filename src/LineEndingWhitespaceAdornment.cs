@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.TextFormatting;
@@ -16,6 +17,7 @@ namespace SelectedWhitespace
     {
         private readonly IWpfTextView _view;
         private readonly IAdornmentLayer _layer;
+        private readonly HashSet<int> _activeLineTags = new HashSet<int>();
         private Typeface _typeface;
         private bool _isEnabled;
 
@@ -66,16 +68,22 @@ namespace SelectedWhitespace
             if (!_isEnabled)
                 return;
 
-            // Redraw if there are new or reformatted lines
-            if (e.NewOrReformattedLines.Count > 0 || e.VerticalTranslation)
+            // Refresh only lines that changed layout or were reformatted.
+            if (e.NewOrReformattedLines.Count > 0)
             {
-                RedrawAdornments();
+                PruneNonVisibleAdornments();
+
+                foreach (ITextViewLine line in e.NewOrReformattedLines)
+                {
+                    RefreshLineAdornment(line);
+                }
             }
         }
 
         private void RedrawAdornments()
         {
             _layer.RemoveAllAdornments();
+            _activeLineTags.Clear();
 
             if (!_isEnabled)
                 return;
@@ -85,8 +93,49 @@ namespace SelectedWhitespace
             // Draw line endings for all visible lines
             foreach (ITextViewLine line in _view.TextViewLines)
             {
-                DrawLineEndingsForLine(line);
+                RefreshLineAdornment(line);
             }
+        }
+
+        private void PruneNonVisibleAdornments()
+        {
+            if (_activeLineTags.Count == 0)
+                return;
+
+            var visibleTags = new HashSet<int>();
+            foreach (ITextViewLine line in _view.TextViewLines)
+            {
+                visibleTags.Add(GetLineTag(line));
+            }
+
+            var tagsToRemove = new List<int>();
+            foreach (var tag in _activeLineTags)
+            {
+                if (!visibleTags.Contains(tag))
+                {
+                    tagsToRemove.Add(tag);
+                }
+            }
+
+            foreach (var tag in tagsToRemove)
+            {
+                _layer.RemoveAdornmentsByTag(tag);
+                _activeLineTags.Remove(tag);
+            }
+        }
+
+        private void RefreshLineAdornment(ITextViewLine line)
+        {
+            var tag = GetLineTag(line);
+            _layer.RemoveAdornmentsByTag(tag);
+            _activeLineTags.Remove(tag);
+
+            DrawLineEndingsForLine(line);
+        }
+
+        private static int GetLineTag(ITextViewLine line)
+        {
+            return line.Start.Position;
         }
 
         private void DrawLineEndingsForLine(ITextViewLine line)
@@ -124,11 +173,11 @@ namespace SelectedWhitespace
 
             if (symbol != null)
             {
-                DrawLineEndingGlyph(line, symbol, tooltip);
+                DrawLineEndingGlyph(line, symbol, tooltip, GetLineTag(line));
             }
         }
 
-        private void DrawLineEndingGlyph(ITextViewLine line, string symbol, string tooltip)
+        private void DrawLineEndingGlyph(ITextViewLine line, string symbol, string tooltip, int lineTag)
         {
             var left = line.TextRight;
             var baseFontSize = _view.FormattedLineSource?.DefaultTextProperties?.FontRenderingEmSize ?? 12;
@@ -148,9 +197,11 @@ namespace SelectedWhitespace
             _layer.AddAdornment(
                 AdornmentPositioningBehavior.TextRelative,
                 line.Extent,
-                null,
+                lineTag,
                 textBlock,
                 null);
+
+            _activeLineTags.Add(lineTag);
         }
     }
 }

@@ -21,7 +21,7 @@ namespace SelectedWhitespace
         public const byte WhitespaceGrayLevel = 128;
         public const byte LineEndingOpacity = 140;  // More transparent (0-255)
         public const double LineEndingFontSizeOffset = -2.0;  // Slightly smaller than code text
-        public const double LineEndingLeftMargin = 8.0;  // Pixels to offset line endings from selection
+        public const double LineEndingLeftMarginScale = 2.0 / 3.0;  // Scales with font size (12pt => 8px)
 
         // Whitespace filtering behavior
         public const bool ShowOnlyMultipleWhitespaceRuns = true;
