@@ -41,6 +41,28 @@ When Visual Studio's built-in **View White Space** setting is enabled (Edit → 
 - **No duplication** - Selection whitespace is automatically disabled when View White Space is on
 - **Outlining aware** - Whitespace inside collapsed code regions is hidden
 - **Non-intrusive** - Uses subtle gray coloring that doesn't distract from your code
+- **Run-aware** - Can show only whitespace runs with 2+ consecutive spaces/tabs
+- **Context-aware** - Can filter runs by indentation, inline, and trailing whitespace contexts
+
+## Options
+
+Configure behavior under **Tools → Options → Whitespace Visualizer → General**.
+
+Available settings:
+
+- **Show only multiple whitespace runs**
+- **Minimum whitespace run length**
+- **Enable context-aware filtering**
+- **Show indentation whitespace runs**
+- **Show inline whitespace runs**
+- **Show trailing whitespace runs**
+
+Default behavior is tuned to reduce noise:
+
+- Single separator spaces are hidden
+- Inline multi-whitespace runs are shown
+- Trailing multi-whitespace runs are shown
+- Indentation runs are hidden
 
 ## How It Works
 
@@ -48,7 +70,7 @@ When Visual Studio's built-in **View White Space** setting is enabled (Edit → 
 2. Whitespace characters appear automatically within the selection
 3. Clear the selection and they disappear
 
-No commands, no configuration - it just works!
+No commands required - it works out of the box and can be customized from Options.
 
 ## Requirements
 
